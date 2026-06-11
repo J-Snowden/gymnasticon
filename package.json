@@ -9,7 +9,7 @@
     "gymnasticon": "./lib/app/cli.js"
   },
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "node scripts/patch-noble-hci.js",
     "prepublishOnly": "npm run build",
     "build": "babel --delete-dir-on-start src -d lib",
     "test": "tape lib/test/**/*.js"
@@ -26,7 +26,6 @@
     "gd-ant-plus": "0.0.29",
     "ini": "^1.3.8",
     "parser-delimiter": "^1.0.2",
-    "patch-package": "^6.5.1",
     "serialport": "^9.0.1",
     "yargs": "^15.3.1"
   },
