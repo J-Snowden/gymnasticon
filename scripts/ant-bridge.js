@@ -126,29 +126,42 @@ function broadcastPower() {
 function broadcastBsc() {
   var now = Date.now();
   var dt = (now - lastBscTime) / 1000; // seconds since last update
+  var prevTime = lastBscTime;
   lastBscTime = now;
 
   // Accumulate wheel revolutions from speed
   // speed (km/h) -> m/s -> revolutions/s -> revolutions in dt
   var speedMs = speed / 3.6;
+  var prevWheelAccum = wheelRevolutions;
   wheelRevolutions += (speedMs / WHEEL_CIRCUMFERENCE_M) * dt;
 
   // Accumulate crank revolutions from cadence
   // cadence (rpm) -> revolutions/s -> revolutions in dt
+  var prevCrankAccum = crankRevolutions;
   crankRevolutions += (cadence / 60) * dt;
 
   var cumWheel = Math.floor(wheelRevolutions) & 0xffff;
   var cumCrank = Math.floor(crankRevolutions) & 0xffff;
 
   // Only update event times when a NEW whole revolution occurs.
-  // Garmin computes speed = deltaRevs / deltaTime, so if we update time
-  // without incrementing revs, it sees "0 revs in Xms" = speed drop to 0.
+  // Interpolate the exact time the last integer boundary was crossed,
+  // rather than using broadcast time. This eliminates speed oscillation
+  // caused by quantization (e.g. alternating 1-rev and 2-rev intervals
+  // over the same broadcast period would halve/double computed speed).
   if (cumWheel !== lastWholeWheelRevs) {
-    wheelEventTime = Math.round((now / 1000) * 1024) & 0xffff;
+    var lastCrossing = Math.floor(wheelRevolutions);
+    var dRevs = wheelRevolutions - prevWheelAccum;
+    var fraction = dRevs > 0 ? (lastCrossing - prevWheelAccum) / dRevs : 1;
+    var crossingMs = prevTime + fraction * (now - prevTime);
+    wheelEventTime = Math.round((crossingMs / 1000) * 1024) & 0xffff;
     lastWholeWheelRevs = cumWheel;
   }
   if (cumCrank !== lastWholeCrankRevs) {
-    crankEventTime = Math.round((now / 1000) * 1024) & 0xffff;
+    var lastCrankCrossing = Math.floor(crankRevolutions);
+    var dCrankRevs = crankRevolutions - prevCrankAccum;
+    var crankFraction = dCrankRevs > 0 ? (lastCrankCrossing - prevCrankAccum) / dCrankRevs : 1;
+    var crankCrossingMs = prevTime + crankFraction * (now - prevTime);
+    crankEventTime = Math.round((crankCrossingMs / 1000) * 1024) & 0xffff;
     lastWholeCrankRevs = cumCrank;
   }
 
