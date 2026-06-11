@@ -61,10 +61,12 @@ var pwrEventCount = 0;
 var accumulatedPower = 0;
 
 // BSC channel state - cumulative counters
-var wheelRevolutions = 0;
-var wheelEventTime = 0;     // in 1/1024 s units
-var crankRevolutions = 0;
-var crankEventTime = 0;     // in 1/1024 s units
+var wheelRevolutions = 0;       // fractional accumulator
+var lastWholeWheelRevs = 0;     // last integer count sent
+var wheelEventTime = 0;         // in 1/1024 s units, updated only on new whole revolution
+var crankRevolutions = 0;       // fractional accumulator
+var lastWholeCrankRevs = 0;     // last integer count sent
+var crankEventTime = 0;         // in 1/1024 s units, updated only on new whole revolution
 var lastBscTime = Date.now();
 
 // HR channel state
@@ -129,22 +131,26 @@ function broadcastBsc() {
   // Accumulate wheel revolutions from speed
   // speed (km/h) -> m/s -> revolutions/s -> revolutions in dt
   var speedMs = speed / 3.6;
-  var wheelRevsInDt = (speedMs / WHEEL_CIRCUMFERENCE_M) * dt;
-  wheelRevolutions += wheelRevsInDt;
-  if (wheelRevsInDt > 0) {
-    wheelEventTime = Math.round((now / 1000) * 1024) & 0xffff;
-  }
+  wheelRevolutions += (speedMs / WHEEL_CIRCUMFERENCE_M) * dt;
 
   // Accumulate crank revolutions from cadence
   // cadence (rpm) -> revolutions/s -> revolutions in dt
-  var crankRevsInDt = (cadence / 60) * dt;
-  crankRevolutions += crankRevsInDt;
-  if (crankRevsInDt > 0) {
-    crankEventTime = Math.round((now / 1000) * 1024) & 0xffff;
-  }
+  crankRevolutions += (cadence / 60) * dt;
 
-  var cumWheel = Math.round(wheelRevolutions) & 0xffff;
-  var cumCrank = Math.round(crankRevolutions) & 0xffff;
+  var cumWheel = Math.floor(wheelRevolutions) & 0xffff;
+  var cumCrank = Math.floor(crankRevolutions) & 0xffff;
+
+  // Only update event times when a NEW whole revolution occurs.
+  // Garmin computes speed = deltaRevs / deltaTime, so if we update time
+  // without incrementing revs, it sees "0 revs in Xms" = speed drop to 0.
+  if (cumWheel !== lastWholeWheelRevs) {
+    wheelEventTime = Math.round((now / 1000) * 1024) & 0xffff;
+    lastWholeWheelRevs = cumWheel;
+  }
+  if (cumCrank !== lastWholeCrankRevs) {
+    crankEventTime = Math.round((now / 1000) * 1024) & 0xffff;
+    lastWholeCrankRevs = cumCrank;
+  }
 
   // BSC data page format:
   // byte 0: crank event time LSB (1/1024s)
