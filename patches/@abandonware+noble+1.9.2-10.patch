@@ -1,8 +1,7 @@
 diff --git a/lib/hci-socket/hci.js b/lib/hci-socket/hci.js
-index 1234567..abcdefg 100644
 --- a/lib/hci-socket/hci.js
 +++ b/lib/hci-socket/hci.js
-@@ -145,7 +145,13 @@ Hci.prototype.setSocketFilter = function () {
+@@ -145,7 +145,13 @@
    filter.writeUInt16LE(opcode, 12);
 
    debug(`setting filter to: ${filter.toString('hex')}`);
