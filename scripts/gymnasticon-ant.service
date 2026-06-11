@@ -1,0 +1,17 @@
+[Unit]
+Description=Gymnasticon ANT+ Bridge
+After=network.target
+
+[Service]
+Type=simple
+# nvm is a shell function; use absolute path to node 12
+ExecStart=/home/pi/.nvm/versions/node/v12.22.12/bin/node /home/pi/gymnasticon/scripts/ant-bridge.js
+Environment=NODE_PATH=/home/pi/gymnasticon/node_modules
+WorkingDirectory=/home/pi/gymnasticon
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

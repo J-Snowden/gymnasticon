@@ -1,0 +1,17 @@
+[Unit]
+Description=Gymnasticon BLE Reader
+After=bluetooth.target gymnasticon-ant.service
+Requires=bluetooth.service
+Wants=gymnasticon-ant.service
+
+[Service]
+Type=simple
+ExecStart=/home/pi/bleak-env/bin/python /home/pi/gymnasticon/scripts/ble-reader.py
+WorkingDirectory=/home/pi/gymnasticon
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
