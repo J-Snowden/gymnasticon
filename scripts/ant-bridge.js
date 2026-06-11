@@ -42,7 +42,7 @@ var BSC_CHANNEL = 2;
 var BSC_DEVICE_TYPE = 0x79;
 var BSC_PERIOD = 8086;      // ~4 Hz
 var BSC_RF = 57;
-var WHEEL_CIRCUMFERENCE_M = 2.105; // 700x25c default
+var WHEEL_CIRCUMFERENCE_M = 1.0; // 1m = 1000mm, set Garmin to match
 
 // Heart Rate (channel 3)
 var HR_CHANNEL = 3;
