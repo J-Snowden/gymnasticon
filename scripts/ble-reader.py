@@ -36,21 +36,25 @@ def parse_indoor_bike_data(data):
     hr = data[IDX_HR] if len(data) > IDX_HR else 0
     return {"power": power, "cadence": cadence, "speed": round(speed_kmh, 2), "hr": hr}
 
+async def scan_for_bike(BleakScanner):
+    """Scan indefinitely until the bike is found, like original gymnasticon."""
+    print(f"Scanning for {BIKE_NAME}...")
+    while True:
+        device = await BleakScanner.find_device_by_name(BIKE_NAME, timeout=10)
+        if device:
+            print(f"Found: {device.name} ({device.address})")
+            return device
+        # No message on each failed scan — just keep going silently
+
 async def main():
     from bleak import BleakClient, BleakScanner
 
     udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    print(f"Scanning for {BIKE_NAME}...")
-    device = await BleakScanner.find_device_by_name(BIKE_NAME, timeout=30)
-    if not device:
-        print(f"ERROR: {BIKE_NAME} not found. Is it powered on?")
-        sys.exit(1)
-
-    print(f"Found: {device.name} ({device.address})")
-
     while True:
         try:
+            device = await scan_for_bike(BleakScanner)
+
             async with BleakClient(device, timeout=30) as client:
                 print(f"Connected to {device.name}")
 
@@ -68,11 +72,11 @@ async def main():
                 while client.is_connected:
                     await asyncio.sleep(1)
 
-                print("Bike disconnected, reconnecting...")
+                print("Bike disconnected, scanning again...")
 
         except Exception as e:
-            print(f"Error: {e}, retrying in 3s...")
-            await asyncio.sleep(3)
+            print(f"Error: {e}, retrying in 5s...")
+            await asyncio.sleep(5)
 
 if __name__ == "__main__":
     asyncio.run(main())
