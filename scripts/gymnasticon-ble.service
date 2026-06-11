@@ -6,6 +6,8 @@ Wants=gymnasticon-ant.service
 
 [Service]
 Type=simple
+ExecStartPre=/usr/sbin/rfkill unblock bluetooth
+ExecStartPre=/bin/sleep 3
 ExecStart=/home/jeffreysnowden/bleak-env/bin/python /home/jeffreysnowden/gymnasticon/scripts/ble-reader.py
 WorkingDirectory=/home/jeffreysnowden/gymnasticon
 Restart=on-failure
