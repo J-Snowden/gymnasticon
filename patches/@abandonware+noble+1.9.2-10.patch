@@ -1,0 +1,20 @@
+diff --git a/lib/hci-socket/hci.js b/lib/hci-socket/hci.js
+index 1234567..abcdefg 100644
+--- a/lib/hci-socket/hci.js
++++ b/lib/hci-socket/hci.js
+@@ -145,7 +145,13 @@ Hci.prototype.setSocketFilter = function () {
+   filter.writeUInt16LE(opcode, 12);
+
+   debug(`setting filter to: ${filter.toString('hex')}`);
+-  this._socket.setFilter(filter);
++  try {
++    this._socket.setFilter(filter);
++  } catch (e) {
++    debug(`setFilter failed (${e.message}), skipping — not required for bindRaw`);
++    // setFilter is not required when bindRaw is used (see
++    // @abandonware/bluetooth-hci-socket README). Modern kernels (>=6.x)
++    // reject this call with EINVAL; safe to ignore.
++  }
+ };
+
+ Hci.prototype.setEventMask = function () {
