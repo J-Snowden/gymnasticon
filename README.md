@@ -1,6 +1,6 @@
-# Gymnasticon Fork: IC4 to Garmin BLE/ANT+ Bridge
+# Gymnasticon Fork: BLE/ANT+ Cycling Sensor Bridge
 
-Bridges exercise bikes that broadcast FTMS (Fitness Machine Service) data to fitness watches and bike computers via standard BLE and ANT+ cycling sensor profiles. Runs on a Raspberry Pi as a headless service.
+Some fitness watches (notably the Garmin 955) can't connect directly to certain exercise bikes (like the Schwinn IC4 / Bowflex C6) even though both support Bluetooth. This project fixes that by acting as a translator — a Raspberry Pi reads the bike's FTMS data and rebroadcasts it as standard BLE and ANT+ cycling sensor profiles that the watch understands.
 
 Forked from [ptx2/gymnasticon](https://github.com/ptx2/gymnasticon). The original Node.js gymnasticon codebase is still in `src/` but is not used. This fork replaces it with lightweight Python and Node.js scripts in `scripts/`.
 
