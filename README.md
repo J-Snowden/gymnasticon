@@ -1,6 +1,6 @@
 # Gymnasticon Fork: IC4 to Garmin BLE/ANT+ Bridge
 
-Bridges the Schwinn IC4 (Bowflex C6) indoor bike to a Garmin 955 watch using a Raspberry Pi 3B. Reads power, cadence, and speed data from the bike over Bluetooth LE and rebroadcasts it as standard cycling sensor profiles that the Garmin understands.
+Bridges exercise bikes that broadcast FTMS (Fitness Machine Service) data to fitness watches and bike computers via standard BLE and ANT+ cycling sensor profiles. Runs on a Raspberry Pi as a headless service.
 
 Forked from [ptx2/gymnasticon](https://github.com/ptx2/gymnasticon). The original Node.js gymnasticon codebase is still in `src/` but is not used. This fork replaces it with lightweight Python and Node.js scripts in `scripts/`.
 
@@ -11,9 +11,9 @@ Forked from [ptx2/gymnasticon](https://github.com/ptx2/gymnasticon). The origina
 Single Python script. No extra hardware needed.
 
 - Reads IC4 bike data via [bleak](https://github.com/hbldh/bleak) (BLE central)
-- Broadcasts as a BLE Cycling Power + Speed/Cadence sensor via [bluez-peripheral](https://github.com/spacecheese/bluez_peripheral) (BLE peripheral)
-- Garmin pairs it as a power meter with cadence
-- **Limitation:** Garmin 955 only uses one BLE sensor type per device, so speed/distance are not available in this mode
+- Broadcasts as a BLE Cycling Power sensor via [bluez-peripheral](https://github.com/spacecheese/bluez_peripheral) (BLE peripheral)
+- Provides **power and cadence** to the receiving device
+- **Note:** Speed/distance depend on the receiving device. Some watches (e.g. Garmin 955) only pair one BLE sensor type per device, so they get power and cadence but not speed.
 
 ### ANT+ Mode
 
@@ -24,12 +24,14 @@ Two-process setup. Requires a [CooSpo ANT+ USB stick](https://www.amazon.com/dp/
 - Garmin pairs power and speed as separate ANT+ sensors
 - **Full data:** power, cadence, speed, and distance all work
 
-## Hardware
+## Hardware Tested
 
 - Raspberry Pi 3B (Bluetooth 4.1, supports simultaneous BLE central + peripheral)
 - Schwinn IC4 / Bowflex C6 indoor bike
-- Garmin 955 watch (or any Garmin with BLE/ANT+ sensor support)
+- Garmin Forerunner 955
 - CooSpo ANT+ USB stick (ANT+ mode only)
+
+Should work with any FTMS-compatible bike, any Raspberry Pi with BLE 4.1+, and any watch or bike computer that supports BLE or ANT+ cycling sensors.
 
 ## Setup
 
