@@ -110,7 +110,7 @@ sudo systemctl start gymnasticon-ble gymnasticon-ant
 
 **BLE mode:** Settings > Sensors & Accessories > Add Sensor > look for the power meter (shows as adapter name, e.g. "pi3")
 
-**ANT+ mode:** Settings > Sensors & Accessories > Add Sensor > pair both the power meter and speed/cadence sensor separately
+**ANT+ mode:** Settings > Sensors & Accessories > Add Sensor > pair both the power meter and speed/cadence sensor separately. Set the wheel size to **1000mm** in the speed sensor settings (this matches the 1.0m wheel circumference used in the code).
 
 ## Checking Logs
 
