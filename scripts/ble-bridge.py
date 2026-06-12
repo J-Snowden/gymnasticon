@@ -47,6 +47,8 @@ class CyclingPowerService(Service):
     def __init__(self):
         super().__init__("1818", True)
         self._power = 0
+        self._wheel_revs = 0
+        self._wheel_event_time = 0
         self._crank_revs = 0
         self._crank_event_time = 0
 
@@ -57,8 +59,8 @@ class CyclingPowerService(Service):
 
     @characteristic("2A65", CharFlags.READ)
     def cycling_power_feature(self, options):
-        """Cycling Power Feature: crank revolution data supported (bit 3)."""
-        return struct.pack("<I", 0x00000008)
+        """Cycling Power Feature: wheel (bit 2) + crank (bit 3) revolution data supported."""
+        return struct.pack("<I", 0x0000000C)
 
     @characteristic("2A5D", CharFlags.READ)
     def sensor_location(self, options):
@@ -66,17 +68,21 @@ class CyclingPowerService(Service):
         return struct.pack("<B", 0x0D)
 
     def _build_power_measurement(self):
-        # Flags: bit 5 = crank revolution data present
-        flags = 0x0020
-        return struct.pack("<hh HH",
+        # Flags: bit 4 = wheel revolution data present, bit 5 = crank revolution data present
+        flags = 0x0030
+        return struct.pack("<hh IH HH",
             flags,
             self._power,
+            self._wheel_revs & 0xFFFFFFFF,
+            self._wheel_event_time & 0xFFFF,
             self._crank_revs & 0xFFFF,
             self._crank_event_time & 0xFFFF,
         )
 
-    def update(self, power, crank_revs, crank_event_time):
+    def update(self, power, wheel_revs, wheel_event_time, crank_revs, crank_event_time):
         self._power = power
+        self._wheel_revs = wheel_revs
+        self._wheel_event_time = wheel_event_time
         self._crank_revs = crank_revs
         self._crank_event_time = crank_event_time
         self.cycling_power_measurement.changed(self._build_power_measurement())
@@ -132,17 +138,17 @@ class RevolutionTracker:
     def __init__(self):
         self.revolutions = 0.0       # fractional accumulator
         self.last_whole_revs = 0     # last integer count
-        self.event_time = 0          # in 1/1024 s units
+        self.crossing_time = 0.0     # raw monotonic seconds of last crossing
         self.last_time = time.monotonic()
 
     def update(self, revs_per_second):
-        """Accumulate revolutions and return (cumulative_revs, event_time_1024s).
+        """Accumulate revolutions and return (cumulative_revs, crossing_time_s).
 
         Args:
             revs_per_second: current revolution rate
 
         Returns:
-            (int, int): cumulative whole revolutions (uint16), event time in 1/1024s (uint16)
+            (int, float): cumulative whole revolutions, raw crossing time in seconds
         """
         now = time.monotonic()
         dt = now - self.last_time
@@ -162,11 +168,10 @@ class RevolutionTracker:
                 fraction = (last_crossing - prev_accum) / d_revs
             else:
                 fraction = 1.0
-            crossing_time = prev_time + fraction * (now - prev_time)
-            self.event_time = round(crossing_time * 1024) & 0xFFFF
+            self.crossing_time = prev_time + fraction * (now - prev_time)
             self.last_whole_revs = cum
 
-        return cum, self.event_time
+        return cum, self.crossing_time
 
 
 from bluez_peripheral.advert import Advertisement
@@ -242,13 +247,18 @@ async def main():
                     crank_rps = cadence / 60.0
                     wheel_rps = (speed / 3.6) / WHEEL_CIRCUMFERENCE_M
 
-                    # Update trackers
-                    crank_revs, crank_time = crank_tracker.update(crank_rps)
-                    wheel_revs, wheel_time = wheel_tracker.update(wheel_rps)
+                    # Update trackers (returns raw crossing time in seconds)
+                    crank_revs, crank_raw = crank_tracker.update(crank_rps)
+                    wheel_revs, wheel_raw = wheel_tracker.update(wheel_rps)
+
+                    # Convert event times to BLE spec units
+                    crank_time_1024 = round(crank_raw * 1024) & 0xFFFF
+                    wheel_time_1024 = round(wheel_raw * 1024) & 0xFFFF
+                    wheel_time_2048 = round(wheel_raw * 2048) & 0xFFFF
 
                     # Update BLE services and notify
-                    cps.update(power, crank_revs, crank_time)
-                    csc.update(wheel_revs, wheel_time, crank_revs, crank_time)
+                    cps.update(power, wheel_revs, wheel_time_2048, crank_revs, crank_time_1024)
+                    csc.update(wheel_revs, wheel_time_1024, crank_revs, crank_time_1024)
 
                     print(f"Power: {power}W  Cadence: {cadence}rpm  "
                           f"Speed: {speed}km/h  HR: {parsed['hr']}bpm")
