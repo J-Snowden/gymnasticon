@@ -168,6 +168,18 @@ from bluez_peripheral.util import Adapter, get_message_bus
 from bluez_peripheral.agent import NoIoAgent
 
 
+async def get_adapter(bus):
+    """Get the first Bluetooth adapter directly, bypassing buggy get_all().
+
+    bluez-peripheral's Adapter.get_all() introspects all child nodes under
+    /org/bluez and assumes they're all adapters. BlueZ 5.82 has non-adapter
+    nodes which causes InterfaceNotFoundError.
+    """
+    introspection = await bus.introspect("org.bluez", "/org/bluez/hci0")
+    proxy = bus.get_proxy_object("org.bluez", "/org/bluez/hci0", introspection)
+    return Adapter(proxy)
+
+
 async def scan_for_bike(BleakScanner):
     """Scan indefinitely until the bike is found."""
     print(f"Scanning for {BIKE_NAME}...")
@@ -184,16 +196,17 @@ async def main():
     # --- Set up BLE peripheral (GATT server + advertising) ---
     bus = await get_message_bus()
 
+    adapter = await get_adapter(bus)
+
     cps = CyclingPowerService()
-    await cps.register(bus)
+    await cps.register(bus, adapter=adapter)
 
     csc = CyclingSpeedCadenceService()
-    await csc.register(bus)
+    await csc.register(bus, adapter=adapter)
 
     agent = NoIoAgent()
     await agent.register(bus)
 
-    adapter = await Adapter.get_first(bus)
     advert = Advertisement("Gymnasticon", ["1818", "1816"], 0x0480, 0)
     await advert.register(bus, adapter)
 
