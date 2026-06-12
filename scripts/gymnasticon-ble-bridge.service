@@ -1,0 +1,18 @@
+[Unit]
+Description=Gymnasticon BLE Bridge
+After=bluetooth.target
+Requires=bluetooth.service
+
+[Service]
+Type=simple
+ExecStartPre=/usr/sbin/rfkill unblock bluetooth
+ExecStartPre=/bin/sleep 3
+ExecStart=/home/jeffreysnowden/bleak-env/bin/python /home/jeffreysnowden/gymnasticon/scripts/ble-bridge.py
+WorkingDirectory=/home/jeffreysnowden/gymnasticon
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
