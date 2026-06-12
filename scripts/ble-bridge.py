@@ -37,7 +37,7 @@ def parse_indoor_bike_data(data):
     return {"power": power, "cadence": cadence, "speed": round(speed_kmh, 2), "hr": hr}
 
 
-from bluez_peripheral.gatt.service import Service
+from bluez_peripheral.gatt.service import Service, ServiceCollection
 from bluez_peripheral.gatt.characteristic import characteristic, CharacteristicFlags as CharFlags
 
 
@@ -199,10 +199,9 @@ async def main():
     adapter = await get_adapter(bus)
 
     cps = CyclingPowerService()
-    await cps.register(bus, adapter=adapter)
-
     csc = CyclingSpeedCadenceService()
-    await csc.register(bus, adapter=adapter)
+    services = ServiceCollection([cps, csc])
+    await services.register(bus, adapter=adapter)
 
     agent = NoIoAgent()
     await agent.register(bus)
