@@ -17,7 +17,7 @@ Single Python script. No extra hardware needed.
 
 ### ANT+ Mode
 
-Two-process setup. Requires a [CooSpo ANT+ USB stick](https://www.amazon.com/dp/B0BG89Y7R8).
+Two-process setup. Requires an ANT+ USB stick.
 
 - `ble-reader.py` (Python/bleak) reads IC4 bike data over BLE, sends via UDP
 - `ant-bridge.js` (Node.js/gd-ant-plus) receives UDP and broadcasts as ANT+ power meter + speed/cadence sensor
@@ -29,7 +29,7 @@ Two-process setup. Requires a [CooSpo ANT+ USB stick](https://www.amazon.com/dp/
 - Raspberry Pi 3B (Bluetooth 4.1, supports simultaneous BLE central + peripheral)
 - Schwinn IC4 / Bowflex C6 indoor bike
 - Garmin Forerunner 955
-- CooSpo ANT+ USB stick (ANT+ mode only)
+- ANT+ USB stick (ANT+ mode only)
 
 Should work with any FTMS-compatible bike, any Raspberry Pi with BLE 4.1+, and any watch or bike computer that supports BLE or ANT+ cycling sensors.
 
