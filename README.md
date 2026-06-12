@@ -35,19 +35,39 @@ Should work with any FTMS-compatible bike, any Raspberry Pi with BLE 4.1+, and a
 
 ## Setup
 
-### Prerequisites
+### 1. Install system dependencies
 
 ```bash
-# Python virtual environment with bleak and bluez-peripheral
+sudo apt update
+sudo apt install -y python3 python3-venv git bluetooth bluez
+
+# Node.js is only needed for ANT+ mode
+sudo apt install -y nodejs npm
+```
+
+### 2. Clone the repo
+
+```bash
+cd ~
+git clone https://github.com/J-Snowden/gymnasticon.git
+cd gymnasticon
+```
+
+### 3. Install Python dependencies
+
+```bash
 python3 -m venv ~/bleak-env
 ~/bleak-env/bin/pip install bleak bluez-peripheral
+```
 
-# Node.js and ANT+ dependencies (ANT+ mode only)
+### 4. Install Node.js dependencies (ANT+ mode only)
+
+```bash
 cd ~/gymnasticon
 npm install
 ```
 
-### Install services
+### 5. Install services
 
 ```bash
 sudo cp ~/gymnasticon/scripts/gymnasticon-ble-bridge.service /etc/systemd/system/
@@ -56,7 +76,7 @@ sudo cp ~/gymnasticon/scripts/gymnasticon-ant.service /etc/systemd/system/
 sudo systemctl daemon-reload
 ```
 
-### Enable one mode
+### 6. Enable one mode
 
 **BLE mode:**
 ```bash
