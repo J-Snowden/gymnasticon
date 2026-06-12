@@ -7,6 +7,7 @@ Requires=bluetooth.service
 Type=simple
 ExecStartPre=/usr/sbin/rfkill unblock bluetooth
 ExecStartPre=/bin/sleep 3
+Environment=PYTHONUNBUFFERED=1
 ExecStart=/home/jeffreysnowden/bleak-env/bin/python /home/jeffreysnowden/gymnasticon/scripts/ble-bridge.py
 WorkingDirectory=/home/jeffreysnowden/gymnasticon
 Restart=on-failure
