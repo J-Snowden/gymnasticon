@@ -47,8 +47,6 @@ class CyclingPowerService(Service):
     def __init__(self):
         super().__init__("1818", True)
         self._power = 0
-        self._wheel_revs = 0
-        self._wheel_event_time = 0
         self._crank_revs = 0
         self._crank_event_time = 0
 
@@ -59,8 +57,8 @@ class CyclingPowerService(Service):
 
     @characteristic("2A65", CharFlags.READ)
     def cycling_power_feature(self, options):
-        """Cycling Power Feature: wheel (bit 2) + crank (bit 3) revolution data supported."""
-        return struct.pack("<I", 0x0000000C)
+        """Cycling Power Feature: crank revolution data supported (bit 3)."""
+        return struct.pack("<I", 0x00000008)
 
     @characteristic("2A5D", CharFlags.READ)
     def sensor_location(self, options):
@@ -68,21 +66,17 @@ class CyclingPowerService(Service):
         return struct.pack("<B", 0x0D)
 
     def _build_power_measurement(self):
-        # Flags: bit 4 = wheel revolution data present, bit 5 = crank revolution data present
-        flags = 0x0030
-        return struct.pack("<hh IH HH",
+        # Flags: bit 5 = crank revolution data present
+        flags = 0x0020
+        return struct.pack("<hh HH",
             flags,
             self._power,
-            self._wheel_revs & 0xFFFFFFFF,
-            self._wheel_event_time & 0xFFFF,
             self._crank_revs & 0xFFFF,
             self._crank_event_time & 0xFFFF,
         )
 
-    def update(self, power, wheel_revs, wheel_event_time, crank_revs, crank_event_time):
+    def update(self, power, crank_revs, crank_event_time):
         self._power = power
-        self._wheel_revs = wheel_revs
-        self._wheel_event_time = wheel_event_time
         self._crank_revs = crank_revs
         self._crank_event_time = crank_event_time
         self.cycling_power_measurement.changed(self._build_power_measurement())
@@ -257,7 +251,7 @@ async def main():
                     wheel_time_2048 = round(wheel_raw * 2048) & 0xFFFF
 
                     # Update BLE services and notify
-                    cps.update(power, wheel_revs, wheel_time_2048, crank_revs, crank_time_1024)
+                    cps.update(power, crank_revs, crank_time_1024)
                     csc.update(wheel_revs, wheel_time_1024, crank_revs, crank_time_1024)
 
                     print(f"Power: {power}W  Cadence: {cadence}rpm  "
