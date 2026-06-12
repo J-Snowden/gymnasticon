@@ -87,6 +87,8 @@ class CyclingSpeedCadenceService(Service):
 
     def __init__(self):
         super().__init__("1816", True)
+        self._wheel_revs = 0
+        self._wheel_event_time = 0
         self._crank_revs = 0
         self._crank_event_time = 0
 
@@ -97,19 +99,23 @@ class CyclingSpeedCadenceService(Service):
 
     @characteristic("2A5C", CharFlags.READ)
     def csc_feature(self, options):
-        """CSC Feature: crank revolution data supported (bit 1)."""
-        return struct.pack("<H", 0x0002)
+        """CSC Feature: wheel revolution data (bit 0) + crank revolution data (bit 1)."""
+        return struct.pack("<H", 0x0003)
 
     def _build_csc_measurement(self):
-        # Flags: bit 1 = crank revolution data present
-        flags = 0x02
-        return struct.pack("<B HH",
+        # Flags: bit 0 = wheel revolution data present, bit 1 = crank revolution data present
+        flags = 0x03
+        return struct.pack("<B IH HH",
             flags,
+            self._wheel_revs & 0xFFFFFFFF,
+            self._wheel_event_time & 0xFFFF,
             self._crank_revs & 0xFFFF,
             self._crank_event_time & 0xFFFF,
         )
 
-    def update(self, crank_revs, crank_event_time):
+    def update(self, wheel_revs, wheel_event_time, crank_revs, crank_event_time):
+        self._wheel_revs = wheel_revs
+        self._wheel_event_time = wheel_event_time
         self._crank_revs = crank_revs
         self._crank_event_time = crank_event_time
         self.csc_measurement.changed(self._build_csc_measurement())
@@ -242,7 +248,7 @@ async def main():
 
                     # Update BLE services and notify
                     cps.update(power, crank_revs, crank_time)
-                    csc.update(crank_revs, crank_time)
+                    csc.update(wheel_revs, wheel_time, crank_revs, crank_time)
 
                     print(f"Power: {power}W  Cadence: {cadence}rpm  "
                           f"Speed: {speed}km/h  HR: {parsed['hr']}bpm")
